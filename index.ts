@@ -10,12 +10,17 @@ const registerKey = <Value, Key>(value: Value, key: Key) => {
 
   return {
     name: key,
+    /** Private behavior subject, not touch it */
     _behaviorSubject,
+    /** Set value */
     set: (newValue: Value) => {
       _behaviorSubject.next(newValue);
     },
+    /** Get as observable */
     get$: () => _behaviorSubject.pipe(skip(1)),
+    /** Get current value */
     snapshot: () => _behaviorSubject.getValue(),
+    /** Alwais get the result and unsubscribe by first() operator */
     whenReady$: () => {
       const result = _behaviorSubject.getValue();
 
