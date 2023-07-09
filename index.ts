@@ -1,4 +1,4 @@
-import { BehaviorSubject, skip } from 'rxjs';
+import { BehaviorSubject, filter, first, of, skip } from 'rxjs';
 
 /*****************************************************************
  * Engine
@@ -14,8 +14,16 @@ const registerKey = <Value, Key>(value: Value, key: Key) => {
     set: (newValue: Value) => {
       _behaviorSubject.next(newValue);
     },
-    get: () => _behaviorSubject.pipe(skip(1)),
-    snapshot: () => _behaviorSubject.getValue()
+    get$: () => _behaviorSubject.pipe(skip(1)),
+    snapshot: () => _behaviorSubject.getValue(),
+    whenReady$: () => {
+      const result = _behaviorSubject.getValue();
+
+      if (result !== undefined) {
+        return of(result).pipe(first());
+      }
+      return _behaviorSubject.pipe(skip(1), filter(a => a !== undefined ? true : false), first())
+    }
   }
 };
 
@@ -51,7 +59,7 @@ const createStore = <Obj>(data:Obj) => {
 
 const example = {
   name: 'Jorge',
-  age: 33,
+  age: 12,
 };
 
 const store = createStore<typeof example>(example);
@@ -60,12 +68,13 @@ const store = createStore<typeof example>(example);
  * Logs
  */
 
-console.log(store.getValues());
+// console.log(store.getValues());
 
-console.log(store.key.name.snapshot());
+// console.log(store.key.name.snapshot());
 
-store.key.name.get().subscribe(a => {
+// store.key.age.set(44)
+
+store.key.age.whenReady$().subscribe(a => {
   console.log(a)
 })
 
-store.key.name.set('Test')
